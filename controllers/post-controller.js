@@ -1,7 +1,12 @@
+const Post = require('../models/post');
+
 exports.postsGET = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+  Post.find({ published: true }, (err, posts) => {
+    if (err) {
+      res.status(500).send('Error retrieving documents from database');
+    }
+    res.json(posts);
+  });
 };
 
 exports.postGET = (req, res) => {
