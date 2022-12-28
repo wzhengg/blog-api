@@ -29,9 +29,18 @@ exports.postPOST = (req, res) => {
 };
 
 exports.postPUT = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+  const post = new Post({
+    _id: req.params.postid,
+    title: req.body.title,
+    body: req.body.body,
+  });
+
+  Post.findByIdAndUpdate(req.params.postid, post, (err) => {
+    if (err) {
+      res.status(404).send(`Could not find post with id ${req.params.postid}`);
+    }
+    res.send('Updated post');
+  });
 };
 
 exports.postDELETE = (req, res) => {
