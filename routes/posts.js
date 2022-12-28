@@ -13,10 +13,10 @@ router.get('/:postid', postController.postGET);
 // POST request for creating a post
 router.post('/', postController.postPOST);
 
-// PUT request for a specific post
+// PUT request for updating a specific post
 router.put('/:postid', postController.postPUT);
 
-// DELETE request for a specific post
+// DELETE request for deleting a specific post
 router.delete('/:postid', postController.postDELETE);
 
 router.use('/:postid', commentsRouter);
