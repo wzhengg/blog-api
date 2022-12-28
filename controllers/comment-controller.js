@@ -50,7 +50,7 @@ exports.commentPOST = async (req, res) => {
 
     res.send('Created comment');
   } catch (err) {
-    res.json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 };
 
