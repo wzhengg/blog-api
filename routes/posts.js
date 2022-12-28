@@ -10,8 +10,8 @@ router.get('/', postController.postsGET);
 // GET request for a specific post
 router.get('/:postid', postController.postGET);
 
-// POST request for a specific post
-router.post('/:postid', postController.postPOST);
+// POST request for creating a post
+router.post('/', postController.postPOST);
 
 // PUT request for a specific post
 router.put('/:postid', postController.postPUT);
