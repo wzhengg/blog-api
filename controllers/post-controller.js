@@ -10,9 +10,12 @@ exports.postsGET = (req, res) => {
 };
 
 exports.postGET = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+  Post.findById(req.params.postid, (err, post) => {
+    if (err) {
+      res.status(404).send(`Could not find post with id ${req.params.postid}`);
+    }
+    res.json(post);
+  });
 };
 
 exports.postPOST = (req, res) => {
