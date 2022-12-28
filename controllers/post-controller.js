@@ -19,9 +19,13 @@ exports.postGET = (req, res) => {
 };
 
 exports.postPOST = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+  const postDoc = new Post({ title: req.body.title, body: req.body.body });
+  postDoc.save((err) => {
+    if (err) {
+      res.status(500).send('Error creating post');
+    }
+    res.send('Created post');
+  });
 };
 
 exports.postPUT = (req, res) => {
