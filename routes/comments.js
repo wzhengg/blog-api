@@ -1,5 +1,5 @@
 const express = require('express');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const commentController = require('../controllers/comment-controller');
 
@@ -9,8 +9,8 @@ router.get('/comments', commentController.commentsGET);
 // GET request for a specific comment
 router.get('/comments/:commentid', commentController.commentGET);
 
-// POST request for a specific comment
-router.post('/comments/:commentid', commentController.commentPOST);
+// POST request for creating a comment
+router.post('/comments', commentController.commentPOST);
 
 // PUT request for a specific comment
 router.put('/comments/:commentid', commentController.commentPUT);
