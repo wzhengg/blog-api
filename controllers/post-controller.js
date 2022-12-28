@@ -44,7 +44,10 @@ exports.postPUT = (req, res) => {
 };
 
 exports.postDELETE = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+  Post.findByIdAndDelete(req.params.postid, (err) => {
+    if (err) {
+      res.status(404).send(`Could not find post with id ${req.params.postid}`);
+    }
+    res.send('Deleted post');
+  });
 };
