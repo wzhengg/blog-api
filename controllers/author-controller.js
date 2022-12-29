@@ -22,3 +22,21 @@ exports.authorGET = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+exports.authorPOST = async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const authorCount = await Author.countDocuments({});
+
+    if (authorCount > 0) {
+      return res.status(403).json({ error: `An author already exists` });
+    }
+
+    const author = new Author({ username, password });
+    await author.save();
+
+    return res.send('Created author');
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
