@@ -139,8 +139,44 @@ exports.commentPUT = async (req, res) => {
   }
 };
 
-exports.commentDELETE = (req, res) => {
-  res.send(
-    `${req.method} ${req.protocol}://${req.get('host')}${req.originalUrl}`
-  );
+exports.commentDELETE = async (req, res) => {
+  const { postid, commentid } = req.params;
+  try {
+    if (!isValidObjectId(postid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find post with id ${postid}` });
+    }
+
+    if (!isValidObjectId(commentid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find comment with id ${commentid}` });
+    }
+
+    const post = await Post.findById(postid);
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ error: `Could not find post with id ${postid}` });
+    }
+
+    const comment = await Comment.findById(commentid);
+
+    if (!comment || !post.comments.includes(comment._id)) {
+      return res.status(404).json({
+        error: `Could not find comment with id ${commentid} in post with id ${postid}`,
+      });
+    }
+
+    await Post.findByIdAndUpdate(postid, {
+      $pull: { comments: commentid },
+    });
+    await Comment.findByIdAndDelete(commentid);
+
+    return res.send('Deleted comment');
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 };
