@@ -9,4 +9,7 @@ router.get('/:authorid', authorController.authorGET);
 // POST request for creating an author
 router.post('/', authorController.authorPOST);
 
+// PUT request for updating an author
+router.put('/:authorid', authorController.authorPUT);
+
 module.exports = router;
