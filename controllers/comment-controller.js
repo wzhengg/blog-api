@@ -1,15 +1,18 @@
 const async = require('async');
+const { isValidObjectId } = require('mongoose');
+
 const Comment = require('../models/comment');
 const Post = require('../models/post');
 
 exports.commentsGET = async (req, res) => {
+  const { postid } = req.params;
   try {
-    const post = await Post.findById(req.params.postid);
+    const post = await Post.findById(postid);
 
     if (!post) {
       return res
         .status(404)
-        .json({ error: `Could not find post with id ${req.params.postid}` });
+        .json({ error: `Could not find post with id ${postid}` });
     }
 
     const tasks = [];
@@ -22,7 +25,12 @@ exports.commentsGET = async (req, res) => {
     const comments = await async.parallel(tasks);
     res.json(comments);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!isValidObjectId(postid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find post with id ${postid}` });
+    }
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -33,6 +41,7 @@ exports.commentGET = (req, res) => {
 };
 
 exports.commentPOST = async (req, res) => {
+  const { postid } = req.params;
   try {
     const post = await Post.findById(req.params.postid);
 
@@ -50,7 +59,12 @@ exports.commentPOST = async (req, res) => {
 
     res.send('Created comment');
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (!isValidObjectId(postid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find post with id ${req.params.postid}` });
+    }
+    return res.status(500).json({ error: err.message });
   }
 };
 
