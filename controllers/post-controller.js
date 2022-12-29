@@ -1,3 +1,4 @@
+const { body, param, validationResult } = require('express-validator');
 const { isValidObjectId } = require('mongoose');
 const Post = require('../models/post');
 
@@ -10,27 +11,37 @@ exports.postsGET = async (req, res) => {
   }
 };
 
-exports.postGET = async (req, res) => {
-  const { postid } = req.params;
-  try {
-    const post = await Post.findById(postid);
+exports.postGET = [
+  // Validate param field
+  param('postid').exists().isMongoId(),
 
-    if (!post) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
-    }
+  async (req, res) => {
+    const { postid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
 
-    return res.json(post);
-  } catch (err) {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const post = await Post.findById(postid);
+
+      if (!post) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find post with id ${postid}` });
+      }
+
+      // No validation errors and post exists, send response
+      return res.json(post);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.postPOST = async (req, res) => {
   const { title, body } = req.body;
