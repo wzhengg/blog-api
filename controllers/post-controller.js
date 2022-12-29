@@ -70,32 +70,47 @@ exports.postPOST = [
   },
 ];
 
-exports.postPUT = async (req, res) => {
-  const { postid } = req.params;
-  const { title, body } = req.body;
-  try {
-    const post = await Post.findById(postid);
+exports.postPUT = [
+  // Validate param field
+  param('postid').exists().isMongoId(),
 
-    if (!post) {
-      return res
-        .status(404)
-        .send({ error: `Could not find post with id ${postid}` });
+  // Validate and sanitize body fields
+  body('title', 'Title is required').trim().notEmpty().escape(),
+  body('body', 'Body is required').trim().notEmpty().escape(),
+
+  async (req, res) => {
+    const { postid } = req.params;
+    const { title, body } = req.body;
+
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const post = await Post.findById(postid);
+
+      if (!post) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .send({ error: `Could not find post with id ${postid}` });
+      }
+
+      // No validation errors and post exists, update and save post
+      post.title = title;
+      post.body = body;
+      await post.save();
+
+      res.send('Updated post');
+    } catch (err) {
+      res.status(500).json({ error: err.message });
     }
-
-    post.title = title;
-    post.body = body;
-    await post.save();
-
-    res.send('Updated post');
-  } catch (err) {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .send({ error: `Could not find post with id ${postid}` });
-    }
-    res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.postDELETE = async (req, res) => {
   const { postid } = req.params;
