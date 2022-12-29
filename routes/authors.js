@@ -12,4 +12,7 @@ router.post('/', authorController.authorPOST);
 // PUT request for updating an author
 router.put('/:authorid', authorController.authorPUT);
 
+// DELETE request for deleting an author
+router.delete('/:authorid', authorController.authorDELETE);
+
 module.exports = router;
