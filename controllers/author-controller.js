@@ -40,3 +40,30 @@ exports.authorPOST = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+exports.authorPUT = async (req, res) => {
+  const { authorid } = req.params;
+  const { username, password } = req.body;
+  try {
+    const author = await Author.findById(authorid);
+
+    if (!author) {
+      return res
+        .status(404)
+        .json({ error: `Could not find author with id ${authorid}` });
+    }
+
+    author.username = username;
+    author.password = password;
+    await author.save();
+
+    return res.send('Updated author');
+  } catch (err) {
+    if (!isValidObjectId(authorid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find author with id ${authorid}` });
+    }
+    return res.status(500).json({ error: err.message });
+  }
+};
