@@ -1,38 +1,50 @@
 const async = require('async');
+const { body, param, validationResult } = require('express-validator');
 const { isValidObjectId } = require('mongoose');
 
 const Comment = require('../models/comment');
 const Post = require('../models/post');
 
-exports.commentsGET = async (req, res) => {
-  const { postid } = req.params;
-  try {
-    const post = await Post.findById(postid);
+exports.commentsGET = [
+  // Validate param field
+  param('postid').exists().isMongoId(),
 
-    if (!post) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
-    }
+  async (req, res) => {
+    const { postid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
 
-    const tasks = [];
-    for (const commentid of post.comments) {
-      tasks.push(function (callback) {
-        Comment.findById(commentid, callback);
-      });
-    }
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    const comments = await async.parallel(tasks);
-    res.json(comments);
-  } catch (err) {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
+      const post = await Post.findById(postid);
+
+      if (!post) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find post with id ${postid}` });
+      }
+
+      // Construct array of functions to fetch each comment
+      const tasks = [];
+      for (const commentid of post.comments) {
+        tasks.push(function (callback) {
+          Comment.findById(commentid, callback);
+        });
+      }
+
+      // Run all tasks to retrieve comemnts in parallel
+      const comments = await async.parallel(tasks);
+      return res.json(comments);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.commentGET = async (req, res) => {
   const { postid, commentid } = req.params;
