@@ -87,33 +87,49 @@ exports.commentGET = [
   },
 ];
 
-exports.commentPOST = async (req, res) => {
-  const { postid } = req.params;
-  try {
-    const post = await Post.findById(req.params.postid);
+exports.commentPOST = [
+  // Validate param field
+  param('postid').exists().isMongoId(),
 
-    if (!post) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${req.params.postid}` });
+  // Validate and sanitize body field
+  body('message', 'Message is required').trim().notEmpty().escape(),
+
+  async (req, res) => {
+    const { postid } = req.params;
+    const { message } = req.body;
+
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const post = await Post.findById(postid);
+
+      if (!post) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find post with id ${postid}` });
+      }
+
+      // No validation errors and post exists, create and save comment
+      const commentDoc = new Comment({ message });
+      const comment = await commentDoc.save();
+
+      // Add comment to post comments array
+      post.comments.push(comment);
+      await post.save();
+
+      res.send('Created comment');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-
-    const commentDoc = new Comment({ message: req.body.message });
-    const comment = await commentDoc.save();
-
-    post.comments.push(comment);
-    await post.save();
-
-    res.send('Created comment');
-  } catch (err) {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${req.params.postid}` });
-    }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.commentPUT = async (req, res) => {
   const { postid, commentid } = req.params;
