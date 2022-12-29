@@ -67,3 +67,18 @@ exports.authorPUT = async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 };
+
+exports.authorDELETE = async (req, res) => {
+  const { authorid } = req.params;
+  try {
+    await Author.findByIdAndDelete(authorid);
+    return res.send('Deleted author');
+  } catch (err) {
+    if (!isValidObjectId(authorid)) {
+      return res
+        .status(404)
+        .json({ error: `Could not find author with id ${authorid}` });
+    }
+    return res.status(500).json({ error: err.message });
+  }
+};
