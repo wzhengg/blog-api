@@ -1,6 +1,5 @@
 const async = require('async');
 const { body, param, validationResult } = require('express-validator');
-const { isValidObjectId } = require('mongoose');
 
 const Comment = require('../models/comment');
 const Post = require('../models/post');
@@ -181,44 +180,51 @@ exports.commentPUT = [
   },
 ];
 
-exports.commentDELETE = async (req, res) => {
-  const { postid, commentid } = req.params;
-  try {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
-    }
+exports.commentDELETE = [
+  // Validate param fields
+  param('postid').exists().isMongoId(),
+  param('commentid').exists().isMongoId(),
 
-    if (!isValidObjectId(commentid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find comment with id ${commentid}` });
-    }
+  async (req, res) => {
+    const { postid, commentid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
 
-    const post = await Post.findById(postid);
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
 
-    if (!post) {
-      return res
-        .status(404)
-        .json({ error: `Could not find post with id ${postid}` });
-    }
+      const post = await Post.findById(postid);
 
-    const comment = await Comment.findById(commentid);
+      if (!post) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find post with id ${postid}` });
+      }
 
-    if (!comment || !post.comments.includes(comment._id)) {
-      return res.status(404).json({
-        error: `Could not find comment with id ${commentid} in post with id ${postid}`,
+      const comment = await Comment.findById(commentid);
+
+      if (!comment || !post.comments.includes(comment._id)) {
+        // Didn't find comment with given id or post doesn't include comment
+        return res.status(404).json({
+          error: `Could not find comment with id ${commentid} in post with id ${postid}`,
+        });
+      }
+
+      // Remove comment from post comments array
+      await Post.findByIdAndUpdate(postid, {
+        $pull: { comments: commentid },
       });
+
+      // Delete comment
+      await Comment.findByIdAndDelete(commentid);
+
+      return res.send('Deleted comment');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-
-    await Post.findByIdAndUpdate(postid, {
-      $pull: { comments: commentid },
-    });
-    await Comment.findByIdAndDelete(commentid);
-
-    return res.send('Deleted comment');
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
