@@ -1,5 +1,4 @@
 const { body, param, validationResult } = require('express-validator');
-const { isValidObjectId } = require('mongoose');
 const Author = require('../models/author');
 
 exports.authorGET = [
@@ -127,17 +126,33 @@ exports.authorPUT = [
   },
 ];
 
-exports.authorDELETE = async (req, res) => {
-  const { authorid } = req.params;
-  try {
-    await Author.findByIdAndDelete(authorid);
-    return res.send('Deleted author');
-  } catch (err) {
-    if (!isValidObjectId(authorid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find author with id ${authorid}` });
+exports.authorDELETE = [
+  // Validate params field
+  param('authorid').exists().isMongoId(),
+
+  async (req, res) => {
+    const { authorid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const deletedAuthor = await Author.findByIdAndDelete(authorid);
+
+      if (!deletedAuthor) {
+        // Didn't find author with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find author with id ${authorid}` });
+      }
+
+      return res.send('Deleted author');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
