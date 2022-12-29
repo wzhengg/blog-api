@@ -1,5 +1,4 @@
 const { body, param, validationResult } = require('express-validator');
-const { isValidObjectId } = require('mongoose');
 const Post = require('../models/post');
 
 exports.postsGET = async (req, res) => {
@@ -112,17 +111,33 @@ exports.postPUT = [
   },
 ];
 
-exports.postDELETE = async (req, res) => {
-  const { postid } = req.params;
-  try {
-    await Post.findByIdAndDelete(postid);
-    res.send('Deleted post');
-  } catch (err) {
-    if (!isValidObjectId(postid)) {
-      return res
-        .status(404)
-        .send({ error: `Could not find post with id ${postid}` });
+exports.postDELETE = [
+  // Validate param field
+  param('postid').exists().isMongoId(),
+
+  async (req, res) => {
+    const { postid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const deletedPost = await Post.findByIdAndDelete(postid);
+
+      if (!deletedPost) {
+        // Didn't find post with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find post with id ${postid}` });
+      }
+
+      res.send('Deleted post');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
