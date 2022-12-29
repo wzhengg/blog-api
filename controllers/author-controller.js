@@ -2,27 +2,37 @@ const { body, param, validationResult } = require('express-validator');
 const { isValidObjectId } = require('mongoose');
 const Author = require('../models/author');
 
-exports.authorGET = async (req, res) => {
-  const { authorid } = req.params;
-  try {
-    const author = await Author.findById(authorid);
+exports.authorGET = [
+  // Validate params field
+  param('authorid').exists().isMongoId(),
 
-    if (!author) {
-      return res
-        .status(404)
-        .json({ error: `Could not find author with id ${authorid}` });
-    }
+  async (req, res) => {
+    const { authorid } = req.params;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
 
-    res.json(author);
-  } catch (err) {
-    if (!isValidObjectId(authorid)) {
-      return res
-        .status(404)
-        .json({ error: `Could not find author with id ${authorid}` });
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const author = await Author.findById(authorid);
+
+      if (!author) {
+        // Didn't find author with given id
+        return res
+          .status(404)
+          .json({ error: `Could not find author with id ${authorid}` });
+      }
+
+      // No validation errors and author exists, send response
+      res.json(author);
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.authorPOST = [
   // Validate and sanitize body fields
