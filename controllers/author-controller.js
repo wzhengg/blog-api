@@ -1,3 +1,4 @@
+const { body, validationResult } = require('express-validator');
 const { isValidObjectId } = require('mongoose');
 const Author = require('../models/author');
 
@@ -23,23 +24,47 @@ exports.authorGET = async (req, res) => {
   }
 };
 
-exports.authorPOST = async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const authorCount = await Author.countDocuments({});
+exports.authorPOST = [
+  // Validate and sanitize body fields
+  body('username')
+    .trim()
+    .notEmpty()
+    .withMessage('Username is required')
+    .isAlphanumeric()
+    .withMessage('Username can only contain letters and numbers')
+    .escape(),
+  body('password', 'Password must be at least 8 characters long')
+    .trim()
+    .isLength({ min: 8 })
+    .escape(),
 
-    if (authorCount > 0) {
-      return res.status(403).json({ error: `An author already exists` });
+  async (req, res) => {
+    const { username, password } = req.body;
+    try {
+      // Only one author can exist in the database
+      const authorCount = await Author.countDocuments({});
+      if (authorCount > 0) {
+        return res.status(403).json({ error: `An author already exists` });
+      }
+
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      // No errors, create and save author
+      const author = new Author({ username, password });
+      await author.save();
+
+      return res.send('Created author');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
     }
-
-    const author = new Author({ username, password });
-    await author.save();
-
-    return res.send('Created author');
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
+  },
+];
 
 exports.authorPUT = async (req, res) => {
   const { authorid } = req.params;
