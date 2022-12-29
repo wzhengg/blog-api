@@ -43,16 +43,32 @@ exports.postGET = [
   },
 ];
 
-exports.postPOST = async (req, res) => {
-  const { title, body } = req.body;
-  try {
-    const postDoc = new Post({ title, body });
-    await postDoc.save();
-    return res.send('Created post');
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-};
+exports.postPOST = [
+  // Validate and sanitize body fields
+  body('title', 'Title is required').trim().notEmpty().escape(),
+  body('body', 'Body is required').trim().notEmpty().escape(),
+
+  async (req, res) => {
+    const { title, body } = req.body;
+    try {
+      // Find validation errors
+      const errors = validationResult(req);
+
+      if (!errors.isEmpty()) {
+        // There are validation errors
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      // No validation errors, create and save post
+      const postDoc = new Post({ title, body });
+      await postDoc.save();
+
+      return res.send('Created post');
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  },
+];
 
 exports.postPUT = async (req, res) => {
   const { postid } = req.params;
