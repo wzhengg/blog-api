@@ -19,6 +19,7 @@ router.put('/:postid', postController.postPUT);
 // DELETE request for deleting a specific post
 router.delete('/:postid', postController.postDELETE);
 
+// Nest comments router
 router.use('/:postid', commentsRouter);
 
 module.exports = router;
