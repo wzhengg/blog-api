@@ -1,5 +1,6 @@
 const { body, param, validationResult } = require('express-validator');
 const Post = require('../models/post');
+const passport = require('passport');
 
 exports.postsGET = async (req, res) => {
   try {
@@ -43,6 +44,9 @@ exports.postGET = [
 ];
 
 exports.postPOST = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate and sanitize body fields
   body('title', 'Title is required').trim().notEmpty().escape(),
   body('body', 'Body is required').trim().notEmpty().escape(),
@@ -70,6 +74,9 @@ exports.postPOST = [
 ];
 
 exports.postPUT = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate param field
   param('postid').exists().isMongoId(),
 
@@ -112,6 +119,9 @@ exports.postPUT = [
 ];
 
 exports.postDELETE = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate param field
   param('postid').exists().isMongoId(),
 
