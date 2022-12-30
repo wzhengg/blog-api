@@ -7,6 +7,10 @@ const mongoose = require('mongoose');
 const indexRouter = require('./routes/index');
 const authorsRouter = require('./routes/authors');
 const postsRouter = require('./routes/posts');
+const authRouter = require('./routes/auth');
+
+// Configure passport
+require('./passport');
 
 const app = express();
 
@@ -28,5 +32,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/authors', authorsRouter);
 app.use('/posts', postsRouter);
+app.use('/auth', authRouter);
 
 module.exports = app;
