@@ -1,5 +1,6 @@
 const async = require('async');
 const { body, param, validationResult } = require('express-validator');
+const passport = require('passport');
 
 const Comment = require('../models/comment');
 const Post = require('../models/post');
@@ -131,6 +132,9 @@ exports.commentPOST = [
 ];
 
 exports.commentPUT = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate param fields
   param('postid').exists().isMongoId(),
   param('commentid').exists().isMongoId(),
@@ -181,6 +185,9 @@ exports.commentPUT = [
 ];
 
 exports.commentDELETE = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate param fields
   param('postid').exists().isMongoId(),
   param('commentid').exists().isMongoId(),
