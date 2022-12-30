@@ -1,7 +1,11 @@
 const { body, param, validationResult } = require('express-validator');
 const Author = require('../models/author');
+const passport = require('passport');
 
 exports.authorGET = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate params field
   param('authorid').exists().isMongoId(),
 
@@ -76,6 +80,9 @@ exports.authorPOST = [
 ];
 
 exports.authorPUT = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate params field
   param('authorid').exists().isMongoId(),
 
@@ -127,6 +134,9 @@ exports.authorPUT = [
 ];
 
 exports.authorDELETE = [
+  // Authenticate request
+  passport.authenticate('jwt', { session: false }),
+
   // Validate params field
   param('authorid').exists().isMongoId(),
 
